@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRT Habit Tracker Card</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #000;
+            font-family: 'VT323', monospace;
+            padding: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        /* CRT Scanline effect */
+        body::before {
+            content: " ";
+            display: block;
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+            z-index: 2;
+            background-size: 100% 2px;
+            pointer-events: none;
+        }
+
+        .card-container {
+            position: relative;
+            z-index: 3;
+            display: flex;
+            justify-content: center;
+        }
+
+        .habit-card {
+            width: 380px;
+            background: linear-gradient(135deg, #1a2332 0%, #0f1621 100%);
+            border: 4px solid #2a3f5f;
+            border-radius: 8px;
+            padding: 25px;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.2);
+            position: relative;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+
+        .day-counter {
+            background: #1a1a1a;
+            color: #000;
+            width: 70px;
+            height: 90px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border: 4px solid #fff;
+            border-radius: 8px;
+            position: relative;
+        }
+
+        .day-counter::before {
+            content: '';
+            position: absolute;
+            top: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 20px;
+            height: 8px;
+            background: #fff;
+            border-radius: 2px 2px 0 0;
+            z-index: 3;
+        }
+
+        .battery-container {
+            position: absolute;
+            bottom: 6px;
+            left: 6px;
+            right: 6px;
+            top: 6px;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .battery-fill {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to top, #00ff00, #00cc00);
+            height: 0%;
+            transition: height 0.5s ease;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+        }
+
+        .day-number {
+            font-size: 48px;
+            line-height: 1;
+            font-weight: bold;
+            position: relative;
+            z-index: 2;
+            color: #fff;
+            text-shadow: 0 0 5px rgba(0, 0, 0, 0.8);
+        }
+
+        .moon-icon {
+            width: 60px;
+            height: 60px;
+            background: #1a1a1a;
+            border-radius: 50%;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .progress-ring {
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg);
+        }
+
+        .progress-ring-circle {
+            stroke: #333;
+            fill: none;
+            stroke-width: 4;
+        }
+
+        .progress-ring-fill {
+            stroke: #00ff00;
+            fill: none;
+            stroke-width: 4;
+            stroke-dasharray: 163.36;
+            stroke-dashoffset: 163.36;
+            transition: stroke-dashoffset 0.5s ease;
+            filter: drop-shadow(0 0 5px rgba(0, 255, 0, 0.5));
+        }
+
+        .xp-counter {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 20px;
+            font-weight: bold;
+            color: #00ff00;
+            text-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+            line-height: 1;
+        }
+
+        .card-icon {
+            text-align: center;
+            margin: 30px 0;
+            font-size: 120px;
+            line-height: 1;
+            opacity: 0.3;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            color: #4a6b8a;
+        }
+
+        .habit-name {
+            text-align: center;
+            margin: 20px 0;
+            padding: 12px 20px;
+            background: #fff;
+            color: #000;
+            font-size: 32px;
+            font-weight: bold;
+            border: 3px solid #000;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .tracker-section {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 10px;
+        }
+
+        .calendar-section {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .week-days {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+            margin-bottom: 8px;
+            height: 28px;
+        }
+
+        .day-label {
+            text-align: center;
+            color: #8fb4d8;
+            font-size: 24px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 28px;
+        }
+
+        .weeks-grid {
+            display: grid;
+            grid-template-rows: repeat(4, 1fr);
+            gap: 4px;
+            flex: 1;
+        }
+
+        .week-row {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+        }
+
+        .day-box {
+            aspect-ratio: 1;
+            background: #fff;
+            border: 3px solid #2a3f5f;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .day-box:hover {
+            background: #e0e0e0;
+            transform: scale(1.05);
+        }
+
+        .day-box.completed {
+            background: #00ff00;
+            border-color: #00cc00;
+            position: relative;
+        }
+
+        .day-box.completed::after {
+            content: '✓';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #000;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .xp-section {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .xp-label {
+            background: #00ff00;
+            color: #000;
+            border: 2px solid #00ff00;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 8px;
+            height: 28px;
+            width: 50px;
+        }
+
+        .xp-badges {
+            display: grid;
+            grid-template-rows: repeat(4, 1fr);
+            gap: 4px;
+            flex: 1;
+        }
+
+        .xp-badge {
+            background: #1a1a1a;
+            color: #333;
+            border: 2px solid #333;
+            text-align: center;
+            font-size: 20px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            width: 50px;
+        }
+
+        .xp-badge.lit {
+            background: #00ff00;
+            color: #000;
+            border-color: #00ff00;
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.6);
+        }
+
+        @keyframes flicker {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+
+        .habit-card:hover {
+            animation: flicker 0.15s infinite;
+        }
+
+        .popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            background: #000;
+            border: 4px solid #00ff00;
+            padding: 40px 60px;
+            z-index: 1000;
+            text-align: center;
+            box-shadow: 0 0 50px rgba(0, 255, 0, 0.8);
+            transition: transform 0.3s ease;
+        }
+
+        .popup.show {
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .popup-text {
+            font-size: 48px;
+            font-weight: bold;
+            color: #00ff00;
+            text-shadow: 0 0 10px rgba(0, 255, 0, 0.8);
+            letter-spacing: 4px;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(1.05); }
+        }
+
+        .popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 999;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .popup-overlay.show {
+            opacity: 1;
+            pointer-events: all;
+        }
+    </style>
+</head>
+<body>
+    <div class="card-container">
+        <div class="habit-card">
+            <div class="card-header">
+                <div class="day-counter">
+                    <div class="battery-container">
+                        <div class="battery-fill" id="batteryFill"></div>
+                    </div>
+                    <div class="day-number" id="dayNumber">00</div>
+                </div>
+                <div class="moon-icon">
+                    <svg class="progress-ring" viewBox="0 0 60 60">
+                        <circle class="progress-ring-circle" cx="30" cy="30" r="26"></circle>
+                        <circle class="progress-ring-fill" id="progressCircle" cx="30" cy="30" r="26"></circle>
+                    </svg>
+                    <div class="xp-counter" id="xpCounter">0</div>
+                </div>
+            </div>
+
+            <div class="card-icon">♄</div>
+
+            <div class="habit-name">DISCIPLINE</div>
+
+            <div class="tracker-section">
+                <div class="calendar-section">
+                    <div class="week-days">
+                        <div class="day-label">S</div>
+                        <div class="day-label">M</div>
+                        <div class="day-label">T</div>
+                        <div class="day-label">W</div>
+                        <div class="day-label">T</div>
+                        <div class="day-label">F</div>
+                        <div class="day-label">S</div>
+                    </div>
+                    <div class="weeks-grid" id="weeksGrid">
+                        <div class="week-row">
+                            <div class="day-box" onclick="toggleDay(this)"></div>
+                            <div class="day-box" onclick="toggleDay(this)"></div>
+                            <div class="day-box" onclick="toggleDay(this)"></div>
+                            <div class="day-box" onclick="toggleDay(this)"></div>
+                            <div class="day-box" onclick="toggleDay(this)"></div>
+                            <div class="day-box" onclick="toggleDay(this)"></div>
+                            <div class="day-box" onclick="toggleDay(this)"></div>
+                        </div>
+                        <div class="week-row">
+                            <div class="day-box" onclick="toggleDay(this)"></div>
+                            <div class="day-box" onclick="toggleDay(this)"></div>
+                            <div class="day-box" onclick="toggleDay(this)"></div>
+                            <div class="day-box" onclick="toggleDay(this)"></div>
+                            <div class="day-box" onclick="toggleDay(this)"></div>
+                            <div class="day-box" onclick="toggleDay(this)"></div>
+                            <div class="day-box" onclick="toggleDay(this)"></div>
+                        </div>
+                        <div class="week-row">
+                            <div class="day-box" onclick="toggleDay(this)"></div>
+                            <div class="day-box" onclick="toggleDay(this)"></div>
+                            <div class="day-box" onclick="toggleDay(this)"></div>
+                            <div class="day-box" onclick="toggleDay(this)"></div>
+                            <div class="day-box" onclick="toggleDay(this)"></div>
+                            <div class="day-box" onclick="toggleDay(this)"></div>
+                            <div class="day-box" onclick="toggleDay(this)"></div>
+                        </div>
+                        <div class="week-row">
+                            <div class="day-box" onclick="toggleDay(this)"></div>
+                            <div class="day-box" onclick="toggleDay(this)"></div>
+                            <div class="day-box" onclick="toggleDay(this)"></div>
+                            <div class="day-box" onclick="toggleDay(this)"></div>
+                            <div class="day-box" onclick="toggleDay(this)"></div>
+                            <div class="day-box" onclick="toggleDay(this)"></div>
+                            <div class="day-box" onclick="toggleDay(this)"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="xp-section">
+                    <div class="xp-label">XP</div>
+                    <div class="xp-badges">
+                        <div class="xp-badge" id="xp10">10</div>
+                        <div class="xp-badge" id="xp20">20</div>
+                        <div class="xp-badge" id="xp30">30</div>
+                        <div class="xp-badge" id="xp40">40</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="popup-overlay" id="popupOverlay" onclick="hidePopup()"></div>
+    <div class="popup" id="popup">
+        <div class="popup-text">KEEP GOING!</div>
+    </div>
+
+    <script>
+        // Track which badges have been achieved
+        var achievedBadges = {
+            xp10: false,
+            xp20: false,
+            xp30: false,
+            xp40: false
+        };
+
+        function toggleDay(element) {
+            element.classList.toggle('completed');
+            updateAll();
+        }
+
+        function updateAll() {
+            updateDayCounter();
+            updateXPBadges();
+            updateXPProgress();
+        }
+
+        function updateDayCounter() {
+            var completed = document.querySelectorAll('.day-box.completed').length;
+            document.getElementById('dayNumber').textContent = completed.toString().padStart(2, '0');
+            
+            var fillPercentage = (completed / 28) * 100;
+            document.getElementById('batteryFill').style.height = fillPercentage + '%';
+        }
+
+        function updateXPBadges() {
+            var rows = document.querySelectorAll('.week-row');
+            
+            var row1Complete = isRowComplete(rows[0]);
+            toggleBadge('xp10', row1Complete);
+            
+            var row2Complete = isRowComplete(rows[1]);
+            toggleBadge('xp20', row1Complete && row2Complete);
+            
+            var row3Complete = isRowComplete(rows[2]);
+            toggleBadge('xp30', row1Complete && row2Complete && row3Complete);
+            
+            var row4Complete = isRowComplete(rows[3]);
+            toggleBadge('xp40', row1Complete && row2Complete && row3Complete && row4Complete);
+        }
+
+        function updateXPProgress() {
+            var rows = document.querySelectorAll('.week-row');
+            var totalXP = 0;
+            
+            var row1Complete = isRowComplete(rows[0]);
+            var row2Complete = isRowComplete(rows[1]);
+            var row3Complete = isRowComplete(rows[2]);
+            var row4Complete = isRowComplete(rows[3]);
+            
+            if (row1Complete) {
+                totalXP += 10;
+            } else {
+                totalXP += rows[0].querySelectorAll('.day-box.completed').length;
+            }
+            
+            if (row2Complete && row1Complete) {
+                totalXP += 20;
+            } else {
+                totalXP += rows[1].querySelectorAll('.day-box.completed').length;
+            }
+            
+            if (row3Complete && row2Complete && row1Complete) {
+                totalXP += 30;
+            } else {
+                totalXP += rows[2].querySelectorAll('.day-box.completed').length;
+            }
+            
+            if (row4Complete && row3Complete && row2Complete && row1Complete) {
+                totalXP += 40;
+            } else {
+                totalXP += rows[3].querySelectorAll('.day-box.completed').length;
+            }
+            
+            document.getElementById('xpCounter').textContent = totalXP;
+            
+            var maxXP = 100;
+            var circumference = 163.36;
+            var progress = (totalXP / maxXP) * circumference;
+            var offset = circumference - progress;
+            
+            document.getElementById('progressCircle').style.strokeDashoffset = offset;
+        }
+
+        function isRowComplete(row) {
+            var total = row.querySelectorAll('.day-box').length;
+            var completed = row.querySelectorAll('.day-box.completed').length;
+            return total === completed && total === 7;
+        }
+
+        function toggleBadge(badgeId, shouldLight) {
+            var badge = document.getElementById(badgeId);
+            var wasLit = badge.classList.contains('lit');
+            
+            if (shouldLight) {
+                badge.classList.add('lit');
+                
+                if (!wasLit && !achievedBadges[badgeId] && badgeId !== 'xp40') {
+                    achievedBadges[badgeId] = true;
+                    showPopup();
+                }
+            } else {
+                badge.classList.remove('lit');
+            }
+        }
+
+        function showPopup() {
+            document.getElementById('popupOverlay').classList.add('show');
+            document.getElementById('popup').classList.add('show');
+            
+            setTimeout(hidePopup, 2000);
+        }
+
+        function hidePopup() {
+            document.getElementById('popupOverlay').classList.remove('show');
+            document.getElementById('popup').classList.remove('show');
+        }
+
+        updateAll();
+    </script>
+</body>
+</html>
